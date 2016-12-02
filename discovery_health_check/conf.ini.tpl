@@ -1,6 +1,6 @@
 [main]
 worker_count = 5
-implement_class = discovery_health_check.registry:RedisRegistry
+implement_class = discovery_health_check:RedisRegistry
 sleep_time = 1000
 
 [redis]
