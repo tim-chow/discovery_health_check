@@ -5,7 +5,11 @@ setup(
     version='1.0.0',
     packages=find_packages(),
     zip_safe=False,
-    package_data = {
+    install_requires=[
+        "redis>=2.10.5",
+        "requests>=2.6.0"
+    ],
+    package_data={
         '': ['*.tpl'],
     },
     entry_points={
