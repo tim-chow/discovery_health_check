@@ -67,8 +67,8 @@ class RedisRegistry(BaseRegistry):
         self._black_list_prefix = options["black_list_prefix"]
         self._node_name = options.get("node_name",
             "NODE_TYPE-default@DATA_CENTER-dc1")
-        self._lock_name = options.get("lock_name",
-            "HEALTH_CHECK_LOCK_NAME")
+        self._lock_name = options.get("lock_prefix",
+            "HEALTH_CHECK_LOCK_PREFIX:") + self._node_name
         self._id = options["identifier"]
 
         self._lock_expire = int(options.get("lock_expire", 90))
