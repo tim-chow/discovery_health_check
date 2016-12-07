@@ -78,6 +78,7 @@ class RedisRegistry(BaseRegistry):
         self._check_interval = \
             float(options["check_interval"])/1000.
         self._disable_time = int(options["disable_time"])/1000
+        self._dirty_timeout = int(options["dirty_timeout"])/1000
 
         self._redis = redis.Redis(
             host=options.get("redis_host", "127.0.0.1"),
@@ -123,12 +124,35 @@ class RedisRegistry(BaseRegistry):
         print "destroy() is invoked"
         self._unlock()
 
+    def _is_dirty(self, upstream_info):
+        try:
+            upstream_info = json.loads(upstream_info)
+            if not isinstance(upstream_info, dict):
+                raise TypeError("upstream_info should be a dict")
+            if not upstream_info.get("lastreporttime"):
+                return False
+
+            if not isinstance(upstream_info["lastreporttime"],
+                    (int, long)):
+                raise TypeError("lastreporttime should be an integer")
+            if time.time() - upstream_info["lastreporttime"] > \
+                    self._dirty_timeout:
+                return True
+        except (ValueError, TypeError) as ex:
+            print "(ValueError, TypeError):", str(ex)
+            return True
+        return False
+
     def get_upstreams(self):
         result = []
         try:
             for k, v in self._redis.hgetall(
                 self._node_name).iteritems():
                 for ki, vi in self._redis.hgetall(v).iteritems():
+                    if self._is_dirty(vi):
+                        print ki, "of", v, "is dirty"
+                        self._redis.hdel(v, ki)
+                        continue
                     result.append((ki, vi, v))
         except redis.exceptions.RedisError as ex:
             print "redis.exceptions.RedisError:", str(ex)
@@ -164,7 +188,7 @@ class RedisRegistry(BaseRegistry):
                 elif self._host:
                     headers["Host"] = self._host
                 r = requests.get(url, timeout=timeout, headers=headers)
-                if self.default_check_timeout(r):
+                if self.determine_result(r):
                     self._on_ok(backend, dc)
                     return
             except requests.exceptions.RequestException as ex:
