@@ -143,6 +143,11 @@ class RedisRegistry(BaseRegistry):
         self._redis.hset(self._black_list_prefix+dc, backend,
             int(time.time())+self._disable_time)
 
+    def determine_result(self, request_object):
+        if request_object.status_code == 200:
+            return True
+        return False
+
     def _make_request(self, backend, backend_info, dc):
         url = "http://"+ backend + \
             (backend_info.get("checkpath") or 
@@ -159,10 +164,9 @@ class RedisRegistry(BaseRegistry):
                 elif self._host:
                     headers["Host"] = self._host
                 r = requests.get(url, timeout=timeout, headers=headers)
-                if r.status_code == 200:
+                if self.default_check_timeout(r):
                     self._on_ok(backend, dc)
                     return
-                print "status_code is:", r.status_code
             except requests.exceptions.RequestException as ex:
                 print "requests.exceptions.RequestError:", str(ex)
             time.sleep(self._check_interval)
