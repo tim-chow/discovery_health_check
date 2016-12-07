@@ -14,4 +14,5 @@ black_list_prefix = BLACK_LIST:
 max_fails = 3
 check_interval = 1000
 disable_time = 100000
+dirty_timeout = 3600000
 
