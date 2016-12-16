@@ -7,7 +7,8 @@ setup(
     zip_safe=False,
     install_requires=[
         "redis>=2.10.5",
-        "requests>=2.6.0"
+        "requests>=2.6.0",
+        "futures>=3.0.5"
     ],
     package_data={
         '': ['*.tpl'],
